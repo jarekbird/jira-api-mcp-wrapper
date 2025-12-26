@@ -71,3 +71,19 @@ test('JIRA_BEARER_TOKEN set → selects bearer auth even if JIRA_EMAIL/JIRA_API_
   }
 });
 
+test('no bearer, missing email/token → throws with expected message', () => {
+  restoreEnv();
+  process.env.JIRA_BASE_URL = 'https://test.atlassian.net';
+  delete process.env.JIRA_BEARER_TOKEN;
+  delete process.env.JIRA_EMAIL;
+  delete process.env.JIRA_API_TOKEN;
+  
+  assert.throws(
+    () => jiraClientFromEnv(),
+    {
+      name: 'Error',
+      message: 'Missing auth env vars: set either JIRA_BEARER_TOKEN or (JIRA_EMAIL + JIRA_API_TOKEN)',
+    }
+  );
+});
+
