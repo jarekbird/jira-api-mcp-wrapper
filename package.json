@@ -13,7 +13,8 @@
     "test": "NODE_OPTIONS=--max-old-space-size=8192 npm run build && node --test \"tests/unit/*.test.js\" \"tests/contract/*.test.js\"",
     "test:integration": "NODE_OPTIONS=--max-old-space-size=8192 npm run build && node --test \"tests/integration/**/*.test.js\"",
     "test:integration:smoke": "NODE_OPTIONS=--max-old-space-size=8192 npm run build && node --test \"tests/integration/smoke.test.js\"",
-    "test:integration:write": "NODE_OPTIONS=--max-old-space-size=8192 npm run build && JIRA_INTEGRATION_WRITE_TESTS=1 node --test \"tests/integration/write.test.js\""
+    "test:integration:write": "NODE_OPTIONS=--max-old-space-size=8192 npm run build && JIRA_INTEGRATION_WRITE_TESTS=1 node --test \"tests/integration/write.test.js\"",
+    "ci": "npm run type-check && npm test"
   },
   "license": "ISC",
   "dependencies": {
