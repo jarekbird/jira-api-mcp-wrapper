@@ -37,3 +37,15 @@ test('jira_get_issue includes fields and expand in query params', async () => {
   assert.equal(fakeJira.calls[0].query.expand, 'names,schema', 'should include expand');
 });
 
+test('jira_get_issue trims key and URL-encodes it in the path', async () => {
+  const fakeJira = new FakeJiraClient();
+  fakeJira.setResponse('/rest/api/3/issue/TEST-1', { id: '12345', key: 'TEST-1' });
+  
+  const server = buildTestServer(fakeJira);
+  await callTool(server, 'jira_get_issue', {
+    issueKey: '  TEST-1  ',
+  });
+  
+  assert.equal(fakeJira.calls[0].path, '/rest/api/3/issue/TEST-1', 'should trim and encode issue key');
+});
+
