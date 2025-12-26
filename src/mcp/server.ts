@@ -55,20 +55,8 @@ function validateAdfInFields(fields: Record<string, unknown>): void {
   }
 }
 
-export class JiraMcpServer {
-  private server: McpServer;
-  private transport: StdioServerTransport;
-  private jira: JiraClient;
-
-  constructor() {
-    this.server = new McpServer({ name: 'jira-api-mcp-wrapper', version: '0.1.0' });
-    this.transport = new StdioServerTransport();
-    this.jira = jiraClientFromEnv();
-    this.setupHandlers();
-  }
-
-  private setupHandlers(): void {
-    this.server.registerTool(
+export function registerJiraTools(server: McpServer, jira: JiraClient): void {
+    server.registerTool(
       'jira_list_fields',
       {
         title: 'Jira: List Fields',
@@ -85,7 +73,7 @@ export class JiraMcpServer {
       },
       async (args: { query?: string; includeSchema: boolean }) => {
         try {
-          const fields = await this.jira.getJson<
+          const fields = await jira.getJson<
             Array<{ id: string; name: string; custom?: boolean; schema?: unknown; searchable?: boolean }>
           >('/rest/api/3/field');
           const q = args.query?.toLowerCase().trim();
@@ -106,7 +94,7 @@ export class JiraMcpServer {
       }
     );
 
-    this.server.registerTool(
+    server.registerTool(
       'jira_get_issue',
       {
         title: 'Jira: Get Issue',
@@ -128,7 +116,7 @@ export class JiraMcpServer {
           const query: Record<string, string | undefined> = {};
           if (args.fields?.length) query.fields = args.fields.join(',');
           if (args.expand?.length) query.expand = args.expand.join(',');
-          const issue = await this.jira.getJson<unknown>(`/rest/api/3/issue/${encodeURIComponent(issueKey)}`, query);
+          const issue = await jira.getJson<unknown>(`/rest/api/3/issue/${encodeURIComponent(issueKey)}`, query);
           return toToolResultJson(issue);
         } catch (error) {
           return toToolError('Failed to get issue', errorToPublicJson(error));
@@ -136,7 +124,7 @@ export class JiraMcpServer {
       }
     );
 
-    this.server.registerTool(
+    server.registerTool(
       'jira_update_issue_fields',
       {
         title: 'Jira: Update Issue Fields',
@@ -184,7 +172,7 @@ export class JiraMcpServer {
           const body: Record<string, unknown> = { fields: args.fields };
           if (args.update) body.update = args.update;
 
-          await this.jira.putJson(`/rest/api/3/issue/${encodeURIComponent(issueKey)}`, body, {
+          await jira.putJson(`/rest/api/3/issue/${encodeURIComponent(issueKey)}`, body, {
             notifyUsers: args.notifyUsers,
             overrideScreenSecurity: args.overrideScreenSecurity,
             overrideEditableFlag: args.overrideEditableFlag,
@@ -197,7 +185,7 @@ export class JiraMcpServer {
       }
     );
 
-    this.server.registerTool(
+    server.registerTool(
       'jira_search_issues_jql',
       {
         title: 'Jira: Search Issues (JQL)',
@@ -228,7 +216,7 @@ export class JiraMcpServer {
           if (args.fields?.length) body.fields = args.fields;
           if (args.expand?.length) body.expand = args.expand;
 
-          const result = await this.jira.postJson<unknown>('/rest/api/3/search', body);
+          const result = await jira.postJson<unknown>('/rest/api/3/search', body);
           return toToolResultJson(result);
         } catch (error) {
           return toToolError('Failed to search issues (JQL)', errorToPublicJson(error));
@@ -236,7 +224,7 @@ export class JiraMcpServer {
       }
     );
 
-    this.server.registerTool(
+    server.registerTool(
       'jira_create_issue',
       {
         title: 'Jira: Create Issue',
@@ -255,7 +243,7 @@ export class JiraMcpServer {
       async (args: { fields: Record<string, unknown>; validateAdf: boolean }) => {
         try {
           if (args.validateAdf) validateAdfInFields(args.fields);
-          const result = await this.jira.postJson<unknown>('/rest/api/3/issue', { fields: args.fields });
+          const result = await jira.postJson<unknown>('/rest/api/3/issue', { fields: args.fields });
           return toToolResultJson(result);
         } catch (error) {
           return toToolError('Failed to create issue', errorToPublicJson(error));
@@ -263,7 +251,7 @@ export class JiraMcpServer {
       }
     );
 
-    this.server.registerTool(
+    server.registerTool(
       'jira_add_comment',
       {
         title: 'Jira: Add Comment',
@@ -292,7 +280,7 @@ export class JiraMcpServer {
 
           if (args.validateAdf && typeof commentBody === 'object') assertValidAdfDoc(commentBody, 'comment.body');
 
-          const result = await this.jira.postJson<unknown>(
+          const result = await jira.postJson<unknown>(
             `/rest/api/3/issue/${encodeURIComponent(issueKey)}/comment`,
             { body: commentBody }
           );
@@ -303,7 +291,7 @@ export class JiraMcpServer {
       }
     );
 
-    this.server.registerTool(
+    server.registerTool(
       'jira_get_transitions',
       {
         title: 'Jira: Get Transitions',
@@ -319,7 +307,7 @@ export class JiraMcpServer {
           const issueKey = normalizeIssueKey(args.issueKey);
           const query: Record<string, string | undefined> = {};
           if (args.expand?.length) query.expand = args.expand.join(',');
-          const result = await this.jira.getJson<unknown>(
+          const result = await jira.getJson<unknown>(
             `/rest/api/3/issue/${encodeURIComponent(issueKey)}/transitions`,
             query
           );
@@ -330,7 +318,7 @@ export class JiraMcpServer {
       }
     );
 
-    this.server.registerTool(
+    server.registerTool(
       'jira_transition_issue',
       {
         title: 'Jira: Transition Issue',
@@ -356,7 +344,7 @@ export class JiraMcpServer {
           if (args.fields) body.fields = args.fields;
           if (args.update) body.update = args.update;
 
-          await this.jira.postJson(`/rest/api/3/issue/${encodeURIComponent(issueKey)}/transitions`, body);
+          await jira.postJson(`/rest/api/3/issue/${encodeURIComponent(issueKey)}/transitions`, body);
           return toToolResultJson({ success: true, issueKey, transitionId: args.transitionId });
         } catch (error) {
           return toToolError('Failed to transition issue', errorToPublicJson(error));
@@ -364,7 +352,7 @@ export class JiraMcpServer {
       }
     );
 
-    this.server.registerTool(
+    server.registerTool(
       'jira_bulk_create_issues',
       {
         title: 'Jira: Bulk Create Issues',
@@ -404,7 +392,7 @@ export class JiraMcpServer {
             }
           }
 
-          const result = await this.jira.postJson<unknown>('/rest/api/3/issue/bulk', {
+          const result = await jira.postJson<unknown>('/rest/api/3/issue/bulk', {
             issueUpdates: args.issueUpdates,
           });
           return toToolResultJson(result);
@@ -414,7 +402,7 @@ export class JiraMcpServer {
       }
     );
 
-    this.server.registerTool(
+    server.registerTool(
       'jira_bulk_get_editable_fields',
       {
         title: 'Jira: Bulk Get Editable Fields',
@@ -439,7 +427,7 @@ export class JiraMcpServer {
         endingBefore?: string;
       }) => {
         try {
-          const result = await this.jira.getJson<unknown>('/rest/api/3/bulk/issues/fields', {
+          const result = await jira.getJson<unknown>('/rest/api/3/bulk/issues/fields', {
             issueIdsOrKeys: args.issueIdsOrKeys.join(','),
             searchText: args.searchText,
             startingAfter: args.startingAfter,
@@ -452,7 +440,7 @@ export class JiraMcpServer {
       }
     );
 
-    this.server.registerTool(
+    server.registerTool(
       'jira_bulk_edit_issues',
       {
         title: 'Jira: Bulk Edit Issues',
@@ -504,7 +492,7 @@ export class JiraMcpServer {
             sendBulkNotification: args.sendBulkNotification,
           };
 
-          const result = await this.jira.postJson<unknown>('/rest/api/3/bulk/issues/fields', payload);
+          const result = await jira.postJson<unknown>('/rest/api/3/bulk/issues/fields', payload);
           return toToolResultJson(result);
         } catch (error) {
           return toToolError('Failed to bulk edit issues', errorToPublicJson(error));
@@ -512,7 +500,7 @@ export class JiraMcpServer {
       }
     );
 
-    this.server.registerTool(
+    server.registerTool(
       'jira_search_users',
       {
         title: 'Jira: Search Users',
@@ -531,7 +519,7 @@ export class JiraMcpServer {
       },
       async (args: { query: string; maxResults: number; includeInactive: boolean }) => {
         try {
-          const users = await this.jira.getJson<
+          const users = await jira.getJson<
             Array<{
               accountId: string;
               displayName?: string;
@@ -555,7 +543,7 @@ export class JiraMcpServer {
       }
     );
 
-    this.server.registerTool(
+    server.registerTool(
       'jira_resolve_user_account_id',
       {
         title: 'Jira: Resolve User AccountId',
@@ -574,7 +562,7 @@ export class JiraMcpServer {
       },
       async (args: { query: string; requireEmailMatch: boolean; includeInactive: boolean }) => {
         try {
-          const users = await this.jira.getJson<
+          const users = await jira.getJson<
             Array<{
               accountId: string;
               displayName?: string;
@@ -613,6 +601,18 @@ export class JiraMcpServer {
         }
       }
     );
+}
+
+export class JiraMcpServer {
+  private server: McpServer;
+  private transport: StdioServerTransport;
+  private jira: JiraClient;
+
+  constructor() {
+    this.server = new McpServer({ name: 'jira-api-mcp-wrapper', version: '0.1.0' });
+    this.transport = new StdioServerTransport();
+    this.jira = jiraClientFromEnv();
+    registerJiraTools(this.server, this.jira);
   }
 
   async start(): Promise<void> {
