@@ -69,3 +69,23 @@ test('normalizeBaseUrl throws when missing scheme', () => {
   );
 });
 
+test('normalizeBaseUrl accepts http:// (even if discouraged)', async () => {
+  const client = new JiraClient({
+    baseUrl: 'http://test.atlassian.net',
+    auth: { type: 'basic', email: 'test@example.com', apiToken: 'token' },
+  });
+  
+  let capturedUrl = null;
+  globalThis.fetch = async (url) => {
+    capturedUrl = url;
+    return new Response(JSON.stringify({ ok: true }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    });
+  };
+  
+  await client.getJson('/rest/api/3/myself');
+  assert.ok(capturedUrl, 'fetch should have been called');
+  assert.ok(capturedUrl.startsWith('http://test.atlassian.net'), 'http:// should be accepted');
+});
+
