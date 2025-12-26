@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { assertValidAdfDoc, looksLikeAdfDoc } from '../dist/jira/adf.js';
+import { assertValidAdfDoc, looksLikeAdfDoc } from '../../dist/jira/adf.js';
 
 test('looksLikeAdfDoc detects ADF-ish objects', () => {
   assert.equal(looksLikeAdfDoc({ type: 'doc', version: 1, content: [] }), true);

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { JiraClient, JiraHttpError } from '../dist/jira/client.js';
+import { JiraClient, JiraHttpError } from '../../dist/jira/client.js';
 
 const originalFetch = globalThis.fetch;
 
