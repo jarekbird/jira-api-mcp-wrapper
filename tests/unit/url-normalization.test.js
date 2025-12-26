@@ -36,3 +36,23 @@ test('normalizeBaseUrl trims whitespace', async () => {
   assert.ok(!capturedUrl.includes('  '), 'URL should not contain leading/trailing spaces');
 });
 
+test('normalizeBaseUrl strips trailing slashes', async () => {
+  const client = new JiraClient({
+    baseUrl: 'https://test.atlassian.net///',
+    auth: { type: 'basic', email: 'test@example.com', apiToken: 'token' },
+  });
+  
+  let capturedUrl = null;
+  globalThis.fetch = async (url) => {
+    capturedUrl = url;
+    return new Response(JSON.stringify({ ok: true }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    });
+  };
+  
+  await client.getJson('/rest/api/3/myself');
+  assert.ok(capturedUrl, 'fetch should have been called');
+  assert.equal(capturedUrl, 'https://test.atlassian.net/rest/api/3/myself', 'trailing slashes should be stripped');
+});
+
