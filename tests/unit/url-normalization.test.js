@@ -56,3 +56,16 @@ test('normalizeBaseUrl strips trailing slashes', async () => {
   assert.equal(capturedUrl, 'https://test.atlassian.net/rest/api/3/myself', 'trailing slashes should be stripped');
 });
 
+test('normalizeBaseUrl throws when missing scheme', () => {
+  assert.throws(
+    () => new JiraClient({
+      baseUrl: 'example.atlassian.net',
+      auth: { type: 'basic', email: 'test@example.com', apiToken: 'token' },
+    }),
+    {
+      name: 'Error',
+      message: /JIRA_BASE_URL must start with http:\/\/ or https:\//,
+    }
+  );
+});
+
