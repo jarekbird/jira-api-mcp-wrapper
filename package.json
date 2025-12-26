@@ -10,7 +10,7 @@
     "start": "tsx src/index.ts",
     "start:prod": "npm run build && node dist/index.js",
     "bundle": "esbuild src/index.ts --bundle --platform=node --target=es2022 --format=cjs --outfile=dist/bundle.cjs",
-    "test": "NODE_OPTIONS=--max-old-space-size=8192 npm run build && node --test \"tests/*.test.js\" --exclude-pattern=\"**/integration.test.js\"",
+    "test": "NODE_OPTIONS=--max-old-space-size=8192 npm run build && node --test \"tests/adf.test.js\" \"tests/jira-client.test.js\"",
     "test:integration": "NODE_OPTIONS=--max-old-space-size=8192 npm run build && node --test \"tests/integration.test.js\""
   },
   "license": "ISC",
