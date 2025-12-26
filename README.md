@@ -6,6 +6,59 @@ An **MCP server (stdio)** that talks directly to **Jira Cloud REST API v3** usin
 - resolving `accountId` for user picker fields
 - updating issue fields (including **ADF JSON**)
 
+## Testing
+
+### Running Tests
+
+**Unit and Contract Tests (default, no network):**
+```bash
+npm test
+```
+
+This runs all unit tests and contract tests without making any network calls. These tests use mocked HTTP clients and are deterministic.
+
+**Integration Tests (requires Jira credentials):**
+
+Integration tests make real HTTP calls to Jira Cloud. They are split into read-only (smoke) and write tests.
+
+**Read-only smoke tests:**
+```bash
+npm run test:integration:smoke
+```
+
+Requires:
+- `JIRA_BASE_URL` (or `JIRA_URL`)
+- `JIRA_EMAIL` and `JIRA_API_TOKEN`, OR `JIRA_BEARER_TOKEN`
+
+Optional variables:
+- `JIRA_TEST_USER_QUERY`: User search query
+- `JIRA_TEST_JQL`: JQL query for search test
+- `JIRA_TEST_ISSUE_KEY`: Issue key for get/transitions tests
+
+**Write tests (creates real data):**
+```bash
+JIRA_INTEGRATION_WRITE_TESTS=1 npm run test:integration:write
+```
+
+Requires:
+- All smoke test variables
+- `JIRA_TEST_PROJECT_KEY`: Project key for creating test issues
+- `JIRA_TEST_TRANSITION_ID` (optional): Transition ID for transition test
+
+⚠️ **Warning**: Write tests create real issues and comments in your Jira instance. They use the tag `[mcp-wrapper-test]` in summaries for easy identification and cleanup.
+
+**All integration tests:**
+```bash
+npm run test:integration
+```
+
+### Test Structure
+
+- `tests/unit/`: Unit tests for individual components (no network)
+- `tests/contract/`: Contract tests for MCP tool handlers (no network, uses fake Jira client)
+- `tests/integration/smoke.test.js`: Read-only integration tests
+- `tests/integration/write.test.js`: Write integration tests (guarded by env var)
+
 ## Configuration
 
 Set environment variables (pick one auth method):
