@@ -28,5 +28,16 @@ test.afterEach(() => {
   restoreEnv();
 });
 
-// Tests will be added in tasks 1.2, 1.3, 1.4
+test('missing JIRA_BASE_URL throws with clear message', () => {
+  restoreEnv();
+  delete process.env.JIRA_BASE_URL;
+  
+  assert.throws(
+    () => jiraClientFromEnv(),
+    {
+      name: 'Error',
+      message: 'Missing required env var: JIRA_BASE_URL',
+    }
+  );
+});
 
